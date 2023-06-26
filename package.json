@@ -1,21 +1,21 @@
 {
-  "name": "recurrencymastered",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "Trico Everfire",
-  "license": "MIT",
-  "dependencies": {
-    "@discordjs/rest": "^1.1.0",
-    "canvas": "^2.9.3",
-    "deepcopy": "^2.1.0",
-    "discord-api-types": "^0.37.8",
-    "discord.js": "^14.3.0",
-    "fs": "^0.0.1-security",
-    "unique-names-generator": "^4.7.1"
-  }
+    "name": "fantasymaster",
+    "scripts": {
+        "build": "tsc --project tsconfig.json",
+        "lint": "eslint src/",
+        "prettier": "prettier --check src/"
+    },
+    "dependencies": {
+        "tslib": "^2.5.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20.3.2",
+        "@typescript-eslint/eslint-plugin": "^5.60.1",
+        "@typescript-eslint/parser": "^5.60.1",
+        "eslint": "^8.43.0",
+        "eslint-config-prettier": "^8.8.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "prettier": "^2.8.8",
+        "typescript": "^5.1.3"
+    }
 }
