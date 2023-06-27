@@ -1,11 +1,16 @@
 import { Client, GatewayDispatchEvents } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 import { WebSocketManager } from '@discordjs/ws';
-import { API_VERSION, CLIENT_INTENT, CLIENT_TOKEN } from './ClientConfiguerations';
+import ClientConfiguerations from './ClientConfiguerations';
 
 class FantasyMaster {
-    private readonly rest = new REST({ version: API_VERSION }).setToken(CLIENT_TOKEN);
-    private readonly gateway = new WebSocketManager({ intents: CLIENT_INTENT, rest: this.rest, token: CLIENT_TOKEN, version: API_VERSION });
+    private readonly rest = new REST({ version: ClientConfiguerations.API_VERSION }).setToken(ClientConfiguerations.CLIENT_TOKEN);
+    private readonly gateway = new WebSocketManager({
+        intents: ClientConfiguerations.CLIENT_INTENT,
+        rest: this.rest,
+        token: ClientConfiguerations.CLIENT_TOKEN,
+        version: ClientConfiguerations.API_VERSION,
+    });
     private readonly client = new Client({ gateway: this.gateway, rest: this.rest });
 
     public constructor() {

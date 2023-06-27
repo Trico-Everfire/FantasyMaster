@@ -1,12 +1,18 @@
 import 'dotenv/config';
 import { env } from 'node:process';
 
-const API_VERSION = '10';
+class ClientConfiguerations {
+    public static readonly API_VERSION = '10';
+    public static readonly CLIENT_INTENT = 0;
+    public static readonly CLIENT_TOKEN = this.getToken('BOT_TOKEN');
 
-const CLIENT_INTENT = 0;
+    private static getToken(tokenName: string): string {
+        const token = env[tokenName];
 
-const botToken = env['BOT_TOKEN'];
-if (!botToken) throw new Error('Bot token not found!');
-const CLIENT_TOKEN = botToken;
+        if (!token) throw new Error(`Could not get token ${tokenName}`);
 
-export { API_VERSION, CLIENT_INTENT, CLIENT_TOKEN };
+        return token;
+    }
+}
+
+export default ClientConfiguerations;
