@@ -29,6 +29,6 @@
         "sourceMap": true,
         "strict": true,
         "target": "ESNext",
-        "verbatimModuleSyntax": true
+        "verbatimModuleSyntax": false
     }
 }
