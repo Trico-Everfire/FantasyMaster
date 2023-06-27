@@ -7,6 +7,8 @@
         "start": "node dist/index"
     },
     "dependencies": {
+        "@discordjs/builders": "^1.6.3",
+        "@discordjs/collection": "^1.5.1",
         "@discordjs/core": "^0.6.0",
         "@discordjs/rest": "^1.7.1",
         "@discordjs/ws": "^0.8.3",
@@ -22,5 +24,8 @@
         "eslint-plugin-prettier": "^4.2.1",
         "prettier": "^2.8.8",
         "typescript": "^5.1.3"
+    },
+    "engines": {
+        "node": ">=20.1.0"
     }
 }
