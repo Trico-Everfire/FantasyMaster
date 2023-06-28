@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { type API, type APIApplicationCommandInteraction as SlashCommand } from '@discordjs/core';
 import { createCanvas } from 'canvas';
-import Maze from '../maze generation/Maze';
+import Maze from '../genertation/maze/Maze';
 import Command from '../structures/Command';
 
 class GenerateMaze extends Command {

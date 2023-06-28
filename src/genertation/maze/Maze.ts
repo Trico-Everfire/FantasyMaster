@@ -2,34 +2,17 @@ import { Canvas, CanvasRenderingContext2D } from 'canvas';
 import Cell from './Cell';
 
 class Maze {
-    size: number;
-    rows: number;
-    columns: number;
-    initiated: boolean;
-    grid: Cell[][];
-    stack: Cell[];
-    mazeInfo: Array<Array<string>>[];
-    drawInfo: { isCenter: number[]; playersInMaze: number[] };
-    firstDraw: boolean;
-    current: Cell | undefined;
+    private initiated = false;
+    private grid: Cell[][] = [];
+    private readonly stack: Cell[] = [];
+    private mazeInfo: string[][][] = [];
+    private readonly drawInfo: { isCenter: number[]; playersInMaze: number[] } = { isCenter: [], playersInMaze: [] };
+    private firstDraw = true;
+    private current: Cell | undefined;
 
-    constructor(size: number, rows: number, columns: number) {
-        this.size = size;
-        this.rows = rows;
-        this.columns = columns;
-        this.initiated = false;
-        this.grid = [];
-        this.stack = [];
-        this.mazeInfo = [];
-        this.drawInfo = {
-            isCenter: [],
-            playersInMaze: [],
-        };
-        this.firstDraw = true;
-        this.current = undefined;
-    }
+    public constructor(private readonly size: number, private readonly rows: number, private readonly columns: number) {}
 
-    generate() {
+    public generate() {
         this.initiated = true;
         for (let r = 0; r < this.rows; r++) {
             const row = [];
@@ -76,14 +59,11 @@ class Maze {
         this.grid = [];
     }
 
-    /**
-     * @param {Maze} maze
-     */
-    insertExistingMaze(maze: Maze) {
+    public insertExistingMaze(maze: Maze) {
         Object.assign(this, maze);
     }
 
-    getNonCornerPiece(): { row: number; column: number } {
+    public getNonCornerPiece(): { row: number; column: number } {
         const getRow = Math.floor(Math.random() * this.rows) + 1;
         const getCol = Math.floor(Math.random() * this.columns) + 1;
         const cellCol = this.grid[getCol];
@@ -95,8 +75,8 @@ class Maze {
         if (cell && cell.isCorner) return this.getNonCornerPiece();
         return { row: getRow, column: getCol };
     }
-    /* eslint-disable indent */
-    addRooms() {
+
+    public addRooms() {
         const rows = this.rows;
         const columns = this.columns;
         const roomAmnt =
@@ -146,7 +126,7 @@ class Maze {
         }
     }
 
-    draw(canvas: Canvas) {
+    public draw(canvas: Canvas) {
         if (this.initiated) {
             canvas.width = this.size;
             canvas.height = this.size;
@@ -190,7 +170,7 @@ class Maze {
         }
     }
 
-    show(cell: Cell, size: number, rows: number, columns: number, canvas: CanvasRenderingContext2D) {
+    public show(cell: Cell, size: number, rows: number, columns: number, canvas: CanvasRenderingContext2D) {
         const x = (cell.colNum * size) / columns;
         const y = (cell.rowNumb * size) / rows;
 
@@ -212,12 +192,7 @@ class Maze {
         }
     }
 
-    /**
-     *
-     * @param {Cell} cell1
-     * @param {Cell} cell2
-     */
-    removeWall(cell1: Cell, cell2: Cell) {
+    public removeWall(cell1: Cell, cell2: Cell) {
         const x = cell1.colNum - cell2.colNum;
 
         if (x == 1) {
@@ -238,15 +213,8 @@ class Maze {
             cell2.walls.topWall = false;
         }
     }
-    /**
-     *
-     * @param {*} cell
-     * @param {*} columns
-     * @param {*} color
-     * @param {CanvasRenderingContext2D} canvas
-     * @param {*} addScaling
-     */
-    highlight(cell: Cell, columns: number, color: string, canvas: CanvasRenderingContext2D, addScaling = 0, isMainCharacter = false) {
+
+    public highlight(cell: Cell, columns: number, color: string, canvas: CanvasRenderingContext2D, addScaling = 0, isMainCharacter = false) {
         //addScaling == undefined ? addScaling = 0 : null;
         const x = (cell.colNum * this.size) / columns + (1 + addScaling / 2);
         const y = (cell.rowNumb * this.size) / columns + (1 + addScaling / 2);
@@ -268,32 +236,35 @@ class Maze {
         canvas.fillRect(x, y, this.size / columns - (3 + addScaling), this.size / columns - (3 + addScaling));
     }
 
-    drawTopWall(x: number, y: number, size: number, columns: number, canvas: CanvasRenderingContext2D) {
+    public drawTopWall(x: number, y: number, size: number, columns: number, canvas: CanvasRenderingContext2D) {
         canvas.beginPath();
         canvas.moveTo(x, y);
         canvas.lineTo(x + size / columns, y);
         canvas.stroke();
     }
-    drawRightWall(x: number, y: number, size: number, columns: number, rows: number, canvas: CanvasRenderingContext2D) {
+
+    public drawRightWall(x: number, y: number, size: number, columns: number, rows: number, canvas: CanvasRenderingContext2D) {
         canvas.beginPath();
         canvas.moveTo(x + size / columns, y);
         canvas.lineTo(x + size / columns, y + size / rows);
         canvas.stroke();
     }
-    drawBottomWall(x: number, y: number, size: number, columns: number, rows: number, canvas: CanvasRenderingContext2D) {
+
+    public drawBottomWall(x: number, y: number, size: number, columns: number, rows: number, canvas: CanvasRenderingContext2D) {
         canvas.beginPath();
         canvas.moveTo(x, y + size / rows);
         canvas.lineTo(x + size / columns, y + size / rows);
         canvas.stroke();
     }
-    drawLeftWall(x: number, y: number, size: number, rows: number, canvas: CanvasRenderingContext2D) {
+
+    public drawLeftWall(x: number, y: number, size: number, rows: number, canvas: CanvasRenderingContext2D) {
         canvas.beginPath();
         canvas.moveTo(x, y);
         canvas.lineTo(x, y + size / rows);
         canvas.stroke();
     }
 
-    checkNeighbours(cell: Cell) {
+    public checkNeighbours(cell: Cell) {
         const grid = this.grid;
         const row = cell.rowNumb;
         const col = cell.colNum;
@@ -341,7 +312,7 @@ class Maze {
         }
     }
 
-    runGeneration() {
+    public runGeneration() {
         if (!this.current) return;
 
         this.current.visited = true;
