@@ -12,6 +12,7 @@
         "@discordjs/core": "^0.6.0",
         "@discordjs/rest": "^1.7.1",
         "@discordjs/ws": "^0.8.3",
+        "canvas": "^2.11.2",
         "dotenv": "^16.3.1",
         "tslib": "^2.5.3"
     },
