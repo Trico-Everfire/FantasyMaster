@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { type API, type APIApplicationCommandInteraction as SlashCommand } from '@discordjs/core';
 import { createCanvas } from 'canvas';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import Maze from '../genertation/maze/Maze';
 import Command from '../structures/Command';
 
@@ -12,9 +13,20 @@ class GenerateMaze extends Command {
 
     public execute(interaction: SlashCommand, api: API): void {
         const canvas = createCanvas(1024, 1024);
-        const maze = new Maze(1024, 60, 60);
-        maze.generate();
-        maze.draw(canvas);
+        const doesFileExist = existsSync(__dirname + '/temp.maze');
+        if (!doesFileExist) {
+            const maze = new Maze(1024, 60, 60);
+            maze.generate();
+            maze.draw(canvas);
+            console.log(maze.saveMazeData());
+            writeFileSync(__dirname + '/temp.maze', maze.saveMazeData());
+        } else {
+            const data = readFileSync(__dirname + '/temp.maze');
+            console.log(data);
+            const maze = new Maze(0, 0, 0);
+            maze.insertExistingMaze(data);
+            maze.draw(canvas);
+        }
 
         api.interactions.reply(interaction.id, interaction.token, { files: [{ data: canvas.toBuffer(), name: 'Maze.png', contentType: 'png' }] });
     }
