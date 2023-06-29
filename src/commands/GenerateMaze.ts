@@ -18,13 +18,12 @@ class GenerateMaze extends Command {
             const maze = new Maze(1024, 60, 60);
             maze.generate();
             maze.draw(canvas);
-            writeFileSync(__dirname + '/temp.maze', maze.saveMazeData(), 'binary');
+            writeFileSync(__dirname + '/temp.maze', maze.saveMazeData());
         } else {
-            const data = readFileSync(__dirname + '/temp.maze', 'binary');
-            const pData = new DataView(Buffer.from(data).buffer);
+            const data = readFileSync(__dirname + '/temp.maze');
             console.log(data);
             const maze = new Maze(0, 0, 0);
-            maze.insertExistingMaze(pData);
+            maze.insertExistingMaze(data);
             maze.draw(canvas);
         }
 

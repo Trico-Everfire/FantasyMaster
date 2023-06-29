@@ -36,10 +36,10 @@ class Maze {
         this.addRooms();
     }
 
-    public insertExistingMaze(maze: DataView) {
-        const rows = Number(maze.getInt32(0));
-        const columns = Number(maze.getInt32(4));
-        const imageSize = Number(maze.getInt32(8));
+    public insertExistingMaze(maze: Buffer) {
+        const rows = Number(maze.readInt32BE(0));
+        const columns = Number(maze.readInt32BE(4));
+        const imageSize = Number(maze.readInt32BE(8));
 
         if (Number.isNaN(rows) || Number.isNaN(columns) || Number.isNaN(imageSize)) return;
 
@@ -56,7 +56,7 @@ class Maze {
             const row = [];
             for (let c = 0; c < this.columns; c++) {
                 const cell = new Cell(r, c, this.size);
-                cell.fromCharacter(Number(maze.getUint8(12 + (r + c))));
+                cell.fromCharacter(Number(maze.readUInt8(12 + (r + c))));
                 row.push(cell);
             }
             this.grid.push(row);
@@ -66,17 +66,17 @@ class Maze {
     }
 
     public saveMazeData() {
-        if (!this.initiated) return new DataView(new ArrayBuffer(0));
+        if (!this.initiated) return Buffer.alloc(0);
 
-        const mazeData = new DataView(new ArrayBuffer(12 + this.rows * this.columns));
-        mazeData.setInt32(0, this.rows);
-        mazeData.setInt32(4, this.columns);
-        mazeData.setInt32(8, this.size);
+        const mazeData = Buffer.alloc(12 + this.rows * this.columns);
+        mazeData.writeInt32BE(this.rows, 0);
+        mazeData.writeInt32BE(this.columns, 4);
+        mazeData.writeInt32BE(this.size, 8);
 
         for (let r = 0; r < this.rows; r++)
             for (let c = 0; c < this.columns; c++) {
                 const cell = this.grid[r][c];
-                mazeData.setUint8(12 + (r + c), cell.toCharacter());
+                mazeData.writeUint8(cell.toCharacter(), 12 + (r + c));
             }
         return mazeData;
     }
