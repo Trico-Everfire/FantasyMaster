@@ -29,6 +29,11 @@ class Cell {
     }
 
     public fromCharacter(char: number) {
+        this.walls.rightWall = false;
+        this.walls.leftWall = false;
+        this.walls.bottomWall = false;
+        this.walls.topWall = false;
+
         let byteTable = char;
         if (byteTable >= 128) {
             this.lootTable[1] = true;

@@ -12,7 +12,6 @@ class Maze {
     private initiated = false;
     private grid: Cell[][] = [];
     private readonly stack: Cell[] = [];
-    // private readonly drawInfo: { isCenter: number[]; playersInMaze: number[] } = { isCenter: [], playersInMaze: [] };
     private firstDraw = true;
     private current: Cell | undefined;
 
@@ -34,30 +33,31 @@ class Maze {
         while (this.runGeneration() != true);
 
         this.addRooms();
+
+        this.grid[0][0].walls.topWall = false;
+        this.grid[this.rows - 1][this.columns - 1].walls.bottomWall = false;
     }
 
     public insertExistingMaze(maze: Buffer) {
-        const rows = Number(maze.readInt32BE(0));
-        const columns = Number(maze.readInt32BE(4));
-        const imageSize = Number(maze.readInt32BE(8));
+        const rows = maze.readInt32BE(0);
+        const columns = maze.readInt32BE(4);
+        const imageSize = maze.readInt32BE(8);
 
         if (Number.isNaN(rows) || Number.isNaN(columns) || Number.isNaN(imageSize)) return;
-
-        console.log('here!');
 
         this.rows = rows;
         this.columns = columns;
         this.size = imageSize;
 
-        console.log(this.rows);
-        console.log(this.columns);
+        let index = 0;
 
         for (let r = 0; r < this.rows; r++) {
             const row = [];
             for (let c = 0; c < this.columns; c++) {
                 const cell = new Cell(r, c, this.size);
-                cell.fromCharacter(Number(maze.readUInt8(12 + (r + c))));
+                cell.fromCharacter(maze.readUInt8(12 + index));
                 row.push(cell);
+                index++;
             }
             this.grid.push(row);
         }
@@ -69,15 +69,18 @@ class Maze {
         if (!this.initiated) return Buffer.alloc(0);
 
         const mazeData = Buffer.alloc(12 + this.rows * this.columns);
-        mazeData.writeInt32BE(this.rows, 0);
-        mazeData.writeInt32BE(this.columns, 4);
-        mazeData.writeInt32BE(this.size, 8);
+        mazeData.fill(0);
+        let offset = 0;
+        offset = mazeData.writeInt32BE(this.rows, offset);
+        offset = mazeData.writeInt32BE(this.columns, offset);
+        offset = mazeData.writeInt32BE(this.size, offset);
 
-        for (let r = 0; r < this.rows; r++)
+        for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.columns; c++) {
                 const cell = this.grid[r][c];
-                mazeData.writeUint8(cell.toCharacter(), 12 + (r + c));
+                offset = mazeData.writeUint8(cell.toCharacter(), offset);
             }
+        }
         return mazeData;
     }
 

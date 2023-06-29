@@ -18,6 +18,7 @@ class GenerateMaze extends Command {
             const maze = new Maze(1024, 60, 60);
             maze.generate();
             maze.draw(canvas);
+            console.log(maze.saveMazeData());
             writeFileSync(__dirname + '/temp.maze', maze.saveMazeData());
         } else {
             const data = readFileSync(__dirname + '/temp.maze');
