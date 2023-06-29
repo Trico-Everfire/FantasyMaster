@@ -1,19 +1,26 @@
 import { Canvas, CanvasRenderingContext2D } from 'canvas';
 import Cell from './Cell';
 
+enum Wall {
+    TOP,
+    BOTTOM,
+    LEFT,
+    RIGHT,
+}
+
 class Maze {
     private initiated = false;
     private grid: Cell[][] = [];
     private readonly stack: Cell[] = [];
-    private mazeInfo: string[][][] = [];
-    private readonly drawInfo: { isCenter: number[]; playersInMaze: number[] } = { isCenter: [], playersInMaze: [] };
+    // private readonly drawInfo: { isCenter: number[]; playersInMaze: number[] } = { isCenter: [], playersInMaze: [] };
     private firstDraw = true;
     private current: Cell | undefined;
 
-    public constructor(private readonly size: number, private readonly rows: number, private readonly columns: number) {}
+    public constructor(private size: number, private rows: number, private columns: number) {}
 
     public generate() {
         this.initiated = true;
+
         for (let r = 0; r < this.rows; r++) {
             const row = [];
             for (let c = 0; c < this.columns; c++) {
@@ -22,45 +29,56 @@ class Maze {
             }
             this.grid.push(row);
         }
+
         this.current = this.grid[0][0];
         while (this.runGeneration() != true);
+
         this.addRooms();
-        let totalNumber = 0;
-        this.mazeInfo = [];
-        for (let r = 0; r < this.rows; r++) {
-            this.mazeInfo[r] = [];
-            for (let c = 0; c < this.columns; c++) {
-                const cell = this.grid[r][c];
-                this.mazeInfo[r][c] = [];
-                //00 is no wall
-                //10 is wall
-                //11 is corner wall
-                if (r == 0 && c == 0) {
-                    cell.walls.topWall = false;
-                }
-                if (r == this.rows - 1 && c == this.columns - 1) {
-                    cell.walls.bottomWall = false;
-                }
-
-                cell.walls.topWall ? (cell.istopCorner ? this.mazeInfo[r][c].push('11') : this.mazeInfo[r][c].push('10')) : this.mazeInfo[r][c].push('00');
-                cell.walls.bottomWall
-                    ? cell.isBottomCorner
-                        ? this.mazeInfo[r][c].push('11')
-                        : this.mazeInfo[r][c].push('10')
-                    : this.mazeInfo[r][c].push('00');
-                cell.walls.leftWall ? (cell.isLeftCorner ? this.mazeInfo[r][c].push('11') : this.mazeInfo[r][c].push('10')) : this.mazeInfo[r][c].push('00');
-                cell.walls.rightWall ? (cell.isRightCorner ? this.mazeInfo[r][c].push('11') : this.mazeInfo[r][c].push('10')) : this.mazeInfo[r][c].push('00');
-                cell.isRoomCenter ? this.mazeInfo[r][c].push('10') : this.mazeInfo[r][c].push('00');
-                cell.isRoomCenter ? this.drawInfo.isCenter.push(totalNumber) : null;
-
-                totalNumber++;
-            }
-        }
-        this.grid = [];
     }
 
-    public insertExistingMaze(maze: Maze) {
-        Object.assign(this, maze);
+    public insertExistingMaze(maze: DataView) {
+        const rows = Number(maze.getInt32(0));
+        const columns = Number(maze.getInt32(4));
+        const imageSize = Number(maze.getInt32(8));
+
+        if (Number.isNaN(rows) || Number.isNaN(columns) || Number.isNaN(imageSize)) return;
+
+        console.log('here!');
+
+        this.rows = rows;
+        this.columns = columns;
+        this.size = imageSize;
+
+        console.log(this.rows);
+        console.log(this.columns);
+
+        for (let r = 0; r < this.rows; r++) {
+            const row = [];
+            for (let c = 0; c < this.columns; c++) {
+                const cell = new Cell(r, c, this.size);
+                cell.fromCharacter(Number(maze.getUint8(12 + (r + c))));
+                row.push(cell);
+            }
+            this.grid.push(row);
+        }
+
+        this.initiated = true;
+    }
+
+    public saveMazeData() {
+        if (!this.initiated) return new DataView(new ArrayBuffer(0));
+
+        const mazeData = new DataView(new ArrayBuffer(12 + this.rows * this.columns));
+        mazeData.setInt32(0, this.rows);
+        mazeData.setInt32(4, this.columns);
+        mazeData.setInt32(8, this.size);
+
+        for (let r = 0; r < this.rows; r++)
+            for (let c = 0; c < this.columns; c++) {
+                const cell = this.grid[r][c];
+                mazeData.setUint8(12 + (r + c), cell.toCharacter());
+            }
+        return mazeData;
     }
 
     public getNonCornerPiece(): { row: number; column: number } {
@@ -99,6 +117,20 @@ class Maze {
                         if (cell && !cell.isCorner) {
                             if (getCol + 1 == getCol + j && getRow + k == getRow + 1) {
                                 cell.isRoomCenter = true;
+                                const d = Math.random();
+                                if (d < 0.5) {
+                                    cell.lootTable[0] = false;
+                                    cell.lootTable[1] = false;
+                                } else if (d < 0.6) {
+                                    cell.lootTable[0] = true;
+                                    cell.lootTable[1] = false;
+                                } else if (d < 0.8) {
+                                    cell.lootTable[0] = false;
+                                    cell.lootTable[1] = true;
+                                } else {
+                                    cell.lootTable[0] = true;
+                                    cell.lootTable[1] = true;
+                                }
                             }
 
                             cell.walls.leftWall = false;
@@ -135,36 +167,11 @@ class Maze {
             context.fillStyle = 'black';
             context.fillRect(0, 0, this.size, this.size);
             context.fillStyle = original;
-            for (let r = 0; r < this.rows; r++) {
+            for (let r = 0; r < this.rows; r++)
                 for (let c = 0; c < this.columns; c++) {
-                    this.show(
-                        {
-                            colNum: c,
-                            rowNumb: r,
-                            parentSize: 0,
-                            isCorner: false,
-                            isLeftCorner: false,
-                            isRightCorner: false,
-                            isBottomCorner: false,
-                            istopCorner: false,
-                            lootTable: [],
-                            isRoomCenter: false,
-                            visited: false,
-                            walls: {
-                                topWall: false,
-                                bottomWall: false,
-                                leftWall: false,
-                                rightWall: false,
-                            },
-                        },
-                        this.size,
-                        this.rows,
-                        this.columns,
-                        context
-                    );
+                    const cell = this.grid[r][c];
+                    this.show(cell, this.size, this.rows, this.columns, context);
                 }
-                //    totalNumber++;
-            }
         } else {
             console.warn('maze draw run before initiation, action canceled to prevent fatal error');
         }
@@ -178,17 +185,16 @@ class Maze {
         canvas.fillStyle = 'black';
         canvas.lineWidth = 2;
 
-        const matchArray = this.mazeInfo[cell.rowNumb][cell.colNum].join('').match(/.{1,2}/g);
+        if (cell.walls.topWall) this.drawWall(x, y, size, columns, rows, Wall.TOP, canvas);
+        if (cell.walls.bottomWall) this.drawWall(x, y, size, columns, rows, Wall.BOTTOM, canvas);
+        if (cell.walls.leftWall) this.drawWall(x, y, size, columns, rows, Wall.LEFT, canvas);
+        if (cell.walls.rightWall) this.drawWall(x, y, size, columns, rows, Wall.RIGHT, canvas);
 
-        if (matchArray) {
-            if (matchArray[0] == '10' || matchArray[0] == '11') this.drawTopWall(x, y, size, columns, canvas);
-            if (matchArray[3] == '10' || matchArray[3] == '11') this.drawRightWall(x, y, size, columns, rows, canvas);
-            if (matchArray[2] == '10' || matchArray[2] == '11') this.drawLeftWall(x, y, size, rows, canvas);
-            if (matchArray[1] == '10' || matchArray[1] == '11') this.drawBottomWall(x, y, size, columns, rows, canvas);
-
-            if (matchArray[4] == '10') {
-                this.highlight(cell, this.columns, 'red', canvas);
-            }
+        if (cell.isRoomCenter) {
+            if (cell.lootTable[0] == false && cell.lootTable[1] == false) this.highlight(cell, this.columns, 'red', canvas);
+            if (cell.lootTable[0] == true && cell.lootTable[1] == false) this.highlight(cell, this.columns, 'green', canvas);
+            if (cell.lootTable[0] == false && cell.lootTable[1] == true) this.highlight(cell, this.columns, 'orange', canvas);
+            if (cell.lootTable[0] == true && cell.lootTable[1] == true) this.highlight(cell, this.columns, 'purple', canvas);
         }
     }
 
@@ -215,7 +221,6 @@ class Maze {
     }
 
     public highlight(cell: Cell, columns: number, color: string, canvas: CanvasRenderingContext2D, addScaling = 0, isMainCharacter = false) {
-        //addScaling == undefined ? addScaling = 0 : null;
         const x = (cell.colNum * this.size) / columns + (1 + addScaling / 2);
         const y = (cell.rowNumb * this.size) / columns + (1 + addScaling / 2);
         if (isMainCharacter) {
@@ -236,32 +241,33 @@ class Maze {
         canvas.fillRect(x, y, this.size / columns - (3 + addScaling), this.size / columns - (3 + addScaling));
     }
 
-    public drawTopWall(x: number, y: number, size: number, columns: number, canvas: CanvasRenderingContext2D) {
-        canvas.beginPath();
-        canvas.moveTo(x, y);
-        canvas.lineTo(x + size / columns, y);
-        canvas.stroke();
-    }
-
-    public drawRightWall(x: number, y: number, size: number, columns: number, rows: number, canvas: CanvasRenderingContext2D) {
-        canvas.beginPath();
-        canvas.moveTo(x + size / columns, y);
-        canvas.lineTo(x + size / columns, y + size / rows);
-        canvas.stroke();
-    }
-
-    public drawBottomWall(x: number, y: number, size: number, columns: number, rows: number, canvas: CanvasRenderingContext2D) {
-        canvas.beginPath();
-        canvas.moveTo(x, y + size / rows);
-        canvas.lineTo(x + size / columns, y + size / rows);
-        canvas.stroke();
-    }
-
-    public drawLeftWall(x: number, y: number, size: number, rows: number, canvas: CanvasRenderingContext2D) {
-        canvas.beginPath();
-        canvas.moveTo(x, y);
-        canvas.lineTo(x, y + size / rows);
-        canvas.stroke();
+    public drawWall(x: number, y: number, size: number, columns: number, rows: number, wall: Wall, canvas: CanvasRenderingContext2D) {
+        switch (wall) {
+            case Wall.TOP:
+                canvas.beginPath();
+                canvas.moveTo(x, y);
+                canvas.lineTo(x + size / columns, y);
+                canvas.stroke();
+                break;
+            case Wall.BOTTOM:
+                canvas.beginPath();
+                canvas.moveTo(x, y + size / rows);
+                canvas.lineTo(x + size / columns, y + size / rows);
+                canvas.stroke();
+                break;
+            case Wall.LEFT:
+                canvas.beginPath();
+                canvas.moveTo(x, y);
+                canvas.lineTo(x, y + size / rows);
+                canvas.stroke();
+                break;
+            case Wall.RIGHT:
+                canvas.beginPath();
+                canvas.moveTo(x + size / columns, y);
+                canvas.lineTo(x + size / columns, y + size / rows);
+                canvas.stroke();
+                break;
+        }
     }
 
     public checkNeighbours(cell: Cell) {
@@ -276,19 +282,10 @@ class Maze {
         const left = col !== 0 ? grid[row][col - 1] : undefined;
         const isCornerPiece = col === 0 || row === 0 || col === grid.length - 1 || row === grid.length - 1 ? grid[row][col] : undefined;
 
-        //cols < >
-        // rows are ^ v
-
         const isLeftCornerPiece = col === 0 ? grid[row][col] : undefined;
         const isRightCornerPiece = col === grid.length - 1 ? grid[row][col] : undefined;
         const isTopCornerPiece = row === 0 ? grid[row][col] : undefined;
         const isBottomCornerPiece = row === grid.length - 1 ? grid[row][col] : undefined;
-        //left <
-        //right >
-        // if(!top) top.isCorner = true;
-        // if(!right) right.isCorner = true;
-        // if(!bottom) bottom.isCorner = true;
-        // if(!left) left.isCorner = true;
 
         if (top && !top.visited) neighbours.push(top);
         if (right && !right.visited) neighbours.push(right);
@@ -329,11 +326,6 @@ class Maze {
         }
 
         if (this.stack.length == 0 && !this.firstDraw) {
-            // for(let gridArr of this.grid){
-            //     for(let cells of gridArr){
-            //         cells.parentGrid = []
-            //     }
-            // }
             return true;
         }
         if (this.firstDraw) this.firstDraw = false;
